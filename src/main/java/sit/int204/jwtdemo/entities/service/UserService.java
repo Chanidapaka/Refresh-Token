@@ -93,14 +93,22 @@ public class UserService {
 
     //week 9
     public Map<String, Object> refreshToken(String refreshToken) {
-        jwtUtils.verifyToken(refreshToken);
+        jwtUtils.verifyToken(refreshToken); //เช็คว่า token มันถูกต้องไหม(valid)
+
+        //ดึงข้อมูลจาก Token (Claims)
         Map<String, Object> claims = jwtUtils.getJWTClaimsSet(refreshToken);
-        jwtUtils.isExpired(claims);
+        jwtUtils.isExpired(claims); //เช็ค Expired
+
+        //ตรวจสอบว่าค่า Claims ถูกต้อง และเป็น Refresh Token
         if (! jwtUtils.isValidClaims(claims) || ! "REFRESH_TOKEN".equals(claims.get("typ"))) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED
                     , "Invalid refresh token");
         }
+
+        //ดึงข้อมูลผู้ใช้จากฐานข้อมูล
         UserDetails userDetails = jwtUserDetailsService.loadUserById((Long) claims.get("uid"));
+
+        // ออก Access Token ใหม่
         return Map.of("access_token"
                 , jwtUtils.generateToken(userDetails));
     }
