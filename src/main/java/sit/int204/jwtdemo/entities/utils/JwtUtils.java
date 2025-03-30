@@ -51,36 +51,49 @@ public class JwtUtils {
         }
     }
 
+    //ถ้าส่งมาแค่ user มาก็ยังทำงานได้ตามปกติ
+    public String generateToken(UserDetails user){
+        return generateToken(user, MAX_TOKEN_INTERVAL, TokenType.ACCESS_TOKEN);
+    }
+
     //สร้าง JWT โดยเซ็นต์ JWT ด้วย RSA Private Key และเพิ่มข้อมูลลงใน Claims ของ JWT
     //generateToken
-    public AccessToken generateToken(UserDetails user) {
+    public String generateToken(UserDetails user,Long tokenAgeInMilliseconds, TokenType tokenType) {
         try {
             JWSSigner signer = new RSASSASigner(rsaPrivateJWK); //Private key มาสร้างลายเซนต์
             JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
                     .subject(user.getUsername()) //เอา username ใส่ใน subject
                     .issuer("https://int204.sit.kmutt.ac.th") //เราเป็นเว็บไซต์อันนี้
-                    .expirationTime(new Date(new Date().getTime() + MAX_TOKEN_INTERVAL)) //token จะมีอายุเท่าไหร่ เอาเวลาปัจจุบัน + MAX_TOKEN_INTERVAL(30 นาที)
+                    .expirationTime(new Date(new Date().getTime() + tokenAgeInMilliseconds)) //token จะมีอายุเท่าไหร่ เอาเวลาปัจจุบัน + MAX_TOKEN_INTERVAL(30 นาที)
                     .issueTime(new Date(new Date().getTime())) //เวลาที่เราสร้าง
                     .claim("authorities", user.getAuthorities()) //จะใส่ไม่ใส่ก็ได้
                     .claim("uid", ((AuthUserDetail) user).getId())
+                    .claim("typ", tokenType.toString())
                     .build(); //ได้ 1ชิ้น.header claim มาหนึ่งชุด
 
             //เริ่มสร้าง JWT
             SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256) //ใช้ อัลกอริทึม RS256 ที่ใช้สร้าง token
                     .keyID(rsaPrivateJWK.getKeyID()).build(), claimsSet); //2ชิ้น.แล้วเอามา + กับ claimsSet(play load)
             signedJWT.sign(signer); //3ชิ้น.เติมลายเซนต์เข้าไป
-            return new AccessToken(signedJWT.serialize()); //token ส่งแบบ text ดังนั้นจึงเอา serialize() คือการเอา string มาต่อกัน แล้วเอาไปใส่ AccessToken ให้เป็น Json
+            return signedJWT.serialize(); //token ส่งแบบ  string มาต่อกัน แล้วเอาไปใส่ AccessToken ให้เป็น Json
         } catch (JOSEException e) {
             throw new RuntimeException(e); //ถ้า error ก็ส่ง run time ออกไป
         }
     }
+
 
     //ใช้ในการตรวจสอบความถูกต้องของ JWT โดยการใช้ RSA Public Key
     public void verifyToken(String token) {
         try {
             SignedJWT signedJWT = SignedJWT.parse(token);
             JWSVerifier verifier = new RSASSAVerifier(rsaPublicJWK); // เพื่อตรวจสอบว่า JWT ถูกเซ็นต์ด้วย RSA Private Key หรือไม่
-            System.out.println("verify method: " + signedJWT.verify(verifier));
+
+            //เพิ่ม 4 บรรทัดนี้ week9 | return boolean ว่าผ่านหรือไม่ผ่าน
+            boolean passed = signedJWT.verify(verifier);
+            System.out.println("Token verification: " + passed);
+            if(! passed) { //ไม่ผ่าน
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Verified Error, Invalid JWT");
+            }
         } catch (JOSEException | ParseException ex) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Verified Error, Invalid JWT", ex);
         }
