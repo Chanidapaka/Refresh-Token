@@ -13,8 +13,10 @@ import sit.int204.jwtdemo.entities.Dto.JwtRequestUser;
 import sit.int204.jwtdemo.entities.entities.User;
 import sit.int204.jwtdemo.entities.repositories.UserRepository;
 import sit.int204.jwtdemo.entities.utils.JwtUtils;
+import sit.int204.jwtdemo.entities.utils.TokenType;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserService {
@@ -65,8 +67,9 @@ public class UserService {
             return userRepo.saveAll(users);
         }
 
+        // week 9
         //Add authenticate()
-        public AccessToken authenticateUser(JwtRequestUser user) {
+        public Map<String, String> authenticateUser(JwtRequestUser user) {
             UsernamePasswordAuthenticationToken upat = new
                 UsernamePasswordAuthenticationToken(
                 user.getUsername(), user.getPassword());
@@ -75,6 +78,30 @@ public class UserService {
             //Exception occurred with (401) if failed
             UserDetails userDetails = jwtUserDetailsService
                     .loadUserByUsername(user.getUsername()); //ถ้าผ่่าน จะ load  user มาอีกรอบนึง
-            return jwtUtils.generateToken(userDetails); //ได้ token เพื่อให้ controller เอาไปใช้
+
+            //Add code week 9
+            // 1000 คือ 1 วินาที | 60*1000 คือ 1 นาที | 60*60*1000 คือ 1 ชั่วโมง | 8*60*60*1000 คือ 8 ชั้วโมง
+            long refreshTotokenAgeInMillisec = 8*60*60*1000; // 8 Hours
+            return Map.of( //สามารถส่ง key value หลายอันได้
+                    "access_token"
+                    , jwtUtils.generateToken(userDetails),
+                    "refresh_token"
+                    , jwtUtils.generateToken(
+                            userDetails, refreshTotokenAgeInMillisec, TokenType.REFRESH_TOKEN)
+            );
+    }
+
+    //week 9
+    public Map<String, Object> refreshToken(String refreshToken) {
+        jwtUtils.verifyToken(refreshToken);
+        Map<String, Object> claims = jwtUtils.getJWTClaimsSet(refreshToken);
+        jwtUtils.isExpired(claims);
+        if (! jwtUtils.isValidClaims(claims) || ! "REFRESH_TOKEN".equals(claims.get("typ"))) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED
+                    , "Invalid refresh token");
+        }
+        UserDetails userDetails = jwtUserDetailsService.loadUserById((Long) claims.get("uid"));
+        return Map.of("access_token"
+                , jwtUtils.generateToken(userDetails));
     }
 }
