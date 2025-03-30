@@ -1,5 +1,6 @@
 package sit.int204.jwtdemo.entities.configs;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,12 +14,20 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import sit.int204.jwtdemo.entities.filters.JwtAuthFilter;
 import sit.int204.jwtdemo.entities.service.JwtUserDetailsService;
 
 //ซึ่งใช้ในการตั้งค่าการควบคุมการเข้าถึง (access control) สำหรับแอปพลิเคชันที่ใช้ Spring Boot โดยตั้งค่าต่างๆ ผ่าน HttpSecurity ใน Spring Security
 @EnableWebSecurity //ใช้ในการเปิดใช้งาน Spring Security ในแอปพลิเคชัน ทำให้สามารถตั้งค่าความปลอดภัยของเว็บแอปพลิเคชันได้
 @Configuration //ที่ใช้ในการกำหนดการตั้งค่าต่างๆ ของ Spring
 public class WebSecurityConfig {
+    @Autowired
+    private JwtAuthFilter jwtAuthFilter;
+
+    @Autowired
+    private JwtUserDetailsService jwtUserDetailsService;
+
 
     //การใช้ HttpSecurity ช่วยให้สามารถกำหนดกฎการอนุญาต (authorization) การป้องกัน CSRF, และการจัดการ session ได้
     @Bean //ที่ใช้กำหนดค่าการตั้งค่า HttpSecurity ซึ่งเป็นตัวควบคุมการตั้งค่าความปลอดภัยของแอปพลิเคชัน
@@ -41,9 +50,12 @@ public class WebSecurityConfig {
                                                 .requestMatchers(HttpMethod.POST, "/api/users").hasAnyAuthority("MANAGER","STAFF")
                                              // .requestMatchers("/api/resources/**").hasAnyAuthority("ADMIN","STAFF", "USER")
                                                 .requestMatchers("/api/resources/**").not().hasAuthority("GUEST")
-                                                .anyRequest().authenticated()
+                                                .anyRequest().authenticated())
+                                                //Add code
+                                                .authenticationProvider(authenticationProvider(jwtUserDetailsService))
+                                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                                                //.exceptionHandling(ex->ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
 
-                )
 
                 //กำหนด session ให้เป็น stateless คือแอปพลิเคชันจะไม่เก็บสถานะของ session ระหว่างคำขอ (request) ทุกคำขอจะไม่ถูกผูกกับ session ใดๆ
                 .sessionManagement(session -> session
