@@ -49,7 +49,7 @@ public class WebSecurityConfig {
                                                 .requestMatchers(HttpMethod.POST, "/api/users/groups").permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/api/users").hasAnyAuthority("MANAGER","STAFF")
                                              // .requestMatchers("/api/resources/**").hasAnyAuthority("ADMIN","STAFF", "USER")
-                                                .requestMatchers("/api/resources/**").not().hasAuthority("GUEST")
+                                                .requestMatchers("/api/resources/**").not().hasAuthority("GUEST") //ทุกคนใช้ได้ยกเว้น GUEST
                                                 .anyRequest().authenticated())
                                                 //Add code
                                                 .authenticationProvider(authenticationProvider(jwtUserDetailsService))
