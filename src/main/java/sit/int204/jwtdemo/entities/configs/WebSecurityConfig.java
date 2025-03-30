@@ -2,6 +2,7 @@ package sit.int204.jwtdemo.entities.configs;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -33,8 +34,15 @@ public class WebSecurityConfig {
         http.csrf(crsf -> crsf.disable())
 
                 //กำหนดให้ทุกคำขอ (request) ในแอปพลิเคชันสามารถเข้าถึงได้โดยไม่ต้องมีการตรวจสอบสิทธิ์ (ทุกหน้าสามารถเข้าถึงได้ไม่จำกัด)
+                //กำหนดสิทธิ์การเข้าถึง (Authorization)
                 .authorizeHttpRequests((requests) -> requests
-                        .anyRequest().permitAll()
+                                                .requestMatchers("/authentications/**","/h2/**").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/users/groups").permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/users").hasAnyAuthority("MANAGER","STAFF")
+                                             // .requestMatchers("/api/resources/**").hasAnyAuthority("ADMIN","STAFF", "USER")
+                                                .requestMatchers("/api/resources/**").not().hasAuthority("GUEST")
+                                                .anyRequest().authenticated()
+
                 )
 
                 //กำหนด session ให้เป็น stateless คือแอปพลิเคชันจะไม่เก็บสถานะของ session ระหว่างคำขอ (request) ทุกคำขอจะไม่ถูกผูกกับ session ใดๆ

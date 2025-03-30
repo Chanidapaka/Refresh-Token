@@ -22,7 +22,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity< Object > refreshToken(
+    public ResponseEntity<Object> refreshToken(
             @RequestHeader("x-refresh-token") String refreshToken) {
         return ResponseEntity.ok(userService.refreshToken(refreshToken));
     }
