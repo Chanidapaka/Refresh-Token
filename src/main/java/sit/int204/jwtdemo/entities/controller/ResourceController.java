@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class ResourceController {
 
     @GetMapping("/users")
-    //@PreAuthorize("hasAnyAuthority('USER','ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyAuthority('USER','ADMIN','MANAGER')") //ใช้ได้เฉพาะ 'USER','ADMIN','MANAGER'
     public ResponseEntity<Object> getUserResource() {
         return ResponseEntity.ok("User resourcse");
     }
 
     @GetMapping("/admins")
-    //@PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Object> getAdminResource() {
         return ResponseEntity.ok("Admin resources");
     }

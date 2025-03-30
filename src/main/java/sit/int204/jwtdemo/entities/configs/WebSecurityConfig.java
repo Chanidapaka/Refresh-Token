@@ -8,6 +8,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,6 +22,7 @@ import sit.int204.jwtdemo.entities.service.JwtUserDetailsService;
 //ซึ่งใช้ในการตั้งค่าการควบคุมการเข้าถึง (access control) สำหรับแอปพลิเคชันที่ใช้ Spring Boot โดยตั้งค่าต่างๆ ผ่าน HttpSecurity ใน Spring Security
 @EnableWebSecurity //ใช้ในการเปิดใช้งาน Spring Security ในแอปพลิเคชัน ทำให้สามารถตั้งค่าความปลอดภัยของเว็บแอปพลิเคชันได้
 @Configuration //ที่ใช้ในการกำหนดการตั้งค่าต่างๆ ของ Spring
+@EnableMethodSecurity
 public class WebSecurityConfig {
     @Autowired
     private JwtAuthFilter jwtAuthFilter;
@@ -89,4 +91,5 @@ public class WebSecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8(); //ใช้ Argon2PasswordEncoder ซึ่งเป็นหนึ่งในวิธีการเข้ารหัสที่มีความปลอดภัยสูง.
     }
+
 }
